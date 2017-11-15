@@ -1,3 +1,5 @@
+; original: https://github.com/AdamBoxall/clojure-irc-client
+
 (ns clojure-irc-client.core
   (:gen-class)
   (:require [clojure.string :as string]
