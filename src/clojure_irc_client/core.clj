@@ -16,7 +16,6 @@
 (defn login-as-guest [socket nick]
   (println (str "Logging in as guest " nick))
   (write socket (str "NICK " nick))
-  ;(Thread/sleep 5000)
   (write socket (str "USER " nick " 0 * :" nick))
   (println "done logging in")
   )
@@ -34,7 +33,14 @@
     (re-find #"^ERROR :Closing Link:" line)
     (close-socket-client socket)
     (re-find #"^PING" line)
-    (write socket (str "PONG " (re-find #":.*" line)) :print)))
+    (write socket (str "PONG " (re-find #":.*" line)) :print)
+    (re-find #"PRIVMSG" line)
+    (let [
+          msg-user (second (re-find #"^\:(\S+)\!" line))
+          msg-content (second (re-find #"^:.+:(.*)" line))]
+              (write socket (str "PRIVMSG #whateverhey :" msg-user " taked! He said: " "\"" msg-content "\"") :print))
+    
+    ))
 
 (defn message-listener [socket]
   (async/go-loop []
@@ -47,7 +53,7 @@
   (try
     (let [socket (socket-client port host)]
       (println (str "Connected to " host ":" port))
-      (login-as-guest socket nick)
+       (login-as-guest socket nick)
       
        (message-listener socket)
       
@@ -56,7 +62,7 @@
        (Thread/sleep 1000)
        (write socket "PRIVMSG #whateverhey :Hello!" true)
        
-       (Thread/sleep 10000)
+       (Thread/sleep 20000)
        (write socket "QUIT")
        (Thread/sleep 1000)
        
@@ -64,9 +70,6 @@
        
        ; it's a loop, so put it last.
        ;(input-listener socket)
-       
-       
-       
        
        )
     (catch Exception e
@@ -79,7 +82,6 @@
 
 (defn -main [& args]
   (let [{:keys [options summary]} (cli/parse-opts args cli-usage)
-         socket (socket-client (:port options) (:host options))
            ]
     (if (or (not (:nick options)) (not (:port options)) (not (:host options)))
       (println summary)
@@ -88,9 +90,6 @@
           (-> options :nick string/trim)
           (-> options :host string/trim)
           (:port options))
-        ;(write socket "JOIN #whateverhey" true)
-        ;(write socket "PRIVMSG #whateverhey :Hello!")
-        ;(Thread/sleep 10000)
-        ;(write socket "QUIT")
+
       )
 )))
